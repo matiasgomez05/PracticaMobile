@@ -1,6 +1,6 @@
 
 import * as React from 'react';
-import { StyleSheet, Text, Image, View, Button } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, Image, View, Button } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 const axios = require('axios').default;
@@ -9,29 +9,38 @@ export default function App() {
 
   const [juego, setJuego] = React.useState("");
   const [imagen, setImagen] = React.useState("");
+  const [cargando, setCargando] = React.useState(false);
 
-  function obtenerJuegoRandom(){
-    let juegoRandom = Math.floor(Math.random() * 367); 
+  async function obtenerJuegoRandom(){
+    function idRandom(min, max) {
+      return Math.floor(Math.random() * (max - min + 1) ) + min;
+    }
+
+    let juegoRandom = idRandom(1, 300); 
     const endpoint = "https://www.freetogame.com/api/game?id="+juegoRandom;
+    console.log(juegoRandom);
 
-    axios.get(`${endpoint}`)
+    setCargando(true);
+    await axios.get(`${endpoint}`)
     .then( (respuesta) => {
         let juego = respuesta.data.title;
         let imagen = { uri: respuesta.data.thumbnail }
 
         setJuego(juego);
         setImagen(imagen);
+        setCargando(false);
       })
-      .catch( (error) => {
-        console.log(error);
-      })
+    .catch( (error) => {
+      console.log(error);
+    })
+    .finally( () => { return })
   }
 
   return (
     <View style={styles.container}>
       <Image source={ imagen } onChange={ (e) => setImagen(e.target.value) } style={styles.imagen}/>
       <Text style={styles.text1}>Juegos gratis al azar:</Text>
-      <Button onPress={ () => obtenerJuegoRandom() } title="Descubrir"></Button>
+      { (!cargando)? <Button onPress={ () => obtenerJuegoRandom() } title="Descubrir"></Button> : <ActivityIndicator /> }
       <Text style={styles.text2}>{ juego }</Text>
       <StatusBar style="auto" />
     </View>
